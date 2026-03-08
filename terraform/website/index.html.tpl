@@ -1,28 +1,43 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
-<title>Arquivos S3</title>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DreamSquad - Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:,">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>☁️</text></svg>">
 </head>
-
 <body>
 
-<h1>Arquivos Gerados</h1>
+<header>
+    <h1>DreamSquad</h1>
+    <p>Arquivos Gerados via Automação S3</p>
+</header>
 
-<button onclick="buscar()">Ver arquivos</button>
+<div class="container">
+    <div class="card">
+        <h2>Monitor de Logs</h2>
+        <p>Integração entre CloudFront, ECS Fargate e S3.</p>
 
-<h2 id="total"></h2>
+        <button id="btn-buscar" onclick="buscar()">Buscar Arquivos</button>
 
-<ul id="lista"></ul>
-
+        <h3 id="total"></h3>
+        <ul id="lista"></ul>
+    </div>
+</div>
 <script>
 
-const API = "http://BACKEND_ALB/files"
+const API = "http://${backend_url}/files"
 
 async function buscar(){
 
+ try{
+
  const r = await fetch(API)
  const data = await r.json()
+
+ console.log(data)
 
  document.getElementById("total").innerText =
   "Total de arquivos: " + data.total
@@ -35,6 +50,13 @@ async function buscar(){
    li.innerText = f
    lista.appendChild(li)
  })
+
+ }catch(e){
+
+ document.getElementById("total").innerText =
+  "Erro ao carregar arquivos"
+
+ }
 
 }
 

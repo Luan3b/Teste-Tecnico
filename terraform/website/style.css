@@ -5,41 +5,56 @@
     box-sizing: border-box;
 }
 
-/* Fonte e corpo da página */
+/* Corpo da página */
 body {
     font-family: Arial, Helvetica, sans-serif;
-    background-color: #f4f6f8;
+    background: #f1f5f9;
     color: #333;
-    line-height: 1.6;
-}
-
-/* Container central */
-.container {
-    max-width: 1100px;
-    margin: auto;
-    padding: 20px;
 }
 
 /* Header */
 header {
     background: #1e293b;
     color: white;
-    padding: 20px 0;
     text-align: center;
+    padding: 30px 20px;
 }
 
-/* Título */
 header h1 {
     font-size: 2rem;
 }
 
-/* Card principal */
+header p {
+    margin-top: 8px;
+    opacity: 0.8;
+}
+
+/* Container central */
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 40px;
+}
+
+/* Card */
 .card {
     background: white;
-    margin-top: 30px;
-    padding: 25px;
+    width: 500px;
+    padding: 30px;
     border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+/* Títulos */
+.card h2 {
+    margin-bottom: 10px;
+}
+
+.card p {
+    margin-bottom: 20px;
+    color: #666;
 }
 
 /* Botão */
@@ -47,8 +62,7 @@ button {
     background: #2563eb;
     color: white;
     border: none;
-    padding: 10px 18px;
-    margin-top: 15px;
+    padding: 12px 20px;
     border-radius: 6px;
     cursor: pointer;
     font-size: 16px;
@@ -59,22 +73,28 @@ button:hover {
     background: #1d4ed8;
 }
 
-/* Input */
-input {
+/* Lista */
+ul {
+    margin-top: 20px;
+    list-style: none;
+}
+
+li {
     padding: 10px;
-    width: 100%;
-    margin-top: 10px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
+    border-bottom: 1px solid #eee;
+}
+
+/* Total */
+#total {
+    margin-top: 20px;
+    font-weight: bold;
 }
 
 /* Responsivo */
-@media (max-width: 768px) {
-    header h1 {
-        font-size: 1.5rem;
+@media (max-width: 600px){
+
+    .card{
+        width: 90%;
     }
 
-    .container {
-        padding: 15px;
-    }
 }
