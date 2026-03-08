@@ -1,22 +1,23 @@
 import boto3
-from datetime import datetime
-import os
+import datetime
 
 s3 = boto3.client("s3")
 
 def lambda_handler(event, context):
-    bucket_name = os.environ["BUCKET_NAME"]
 
-    now = datetime.utcnow().strftime("%Y-%m-%d_%H-%M-%S")
-    file_name = f"{now}.txt"
+    bucket = "files-bucket"
+
+    now = datetime.datetime.now().isoformat()
+
+    filename = f"file-{now}.txt"
 
     s3.put_object(
-        Bucket=bucket_name,
-        Key=file_name,
-        Body=f"Arquivo gerado em {now}"
+        Bucket=bucket,
+        Key=filename,
+        Body="arquivo criado automaticamente"
     )
 
     return {
         "statusCode": 200,
-        "body": f"Arquivo {file_name} criado com sucesso"
+        "body": "arquivo criado"
     }

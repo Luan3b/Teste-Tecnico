@@ -36,9 +36,12 @@ resource "aws_s3_bucket_policy" "website_policy" {
 }
 
 resource "aws_s3_object" "index" {
+
   bucket = aws_s3_bucket.website.bucket
-  key    = "index.html"
-  source = "${path.root}/website/index.html"
+
+  key = "index.html"
+
+  content = data.template_file.index.rendered
 
   content_type = "text/html"
 }
@@ -92,5 +95,12 @@ resource "aws_cloudfront_distribution" "cdn" {
 
   tags = {
     Name = "Terraform CDN"
+  }
+}
+data "template_file" "index" {
+  template = file("${path.module}/../../website/index.html.tpl")
+
+  vars = {
+    backend_url = var.backend_url
   }
 }

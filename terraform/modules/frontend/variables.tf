@@ -5,3 +5,6 @@ variable "project_name" {
 variable "environment" {
   type = string
 }
+variable "backend_url" {
+  type = string
+}

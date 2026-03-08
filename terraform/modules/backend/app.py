@@ -5,24 +5,26 @@ import os
 app = Flask(__name__)
 
 s3 = boto3.client("s3")
-bucket = os.environ.get("BUCKET_NAME")
+BUCKET = os.environ.get("BUCKET_NAME")
 
 @app.route("/files")
-def files():
+def list_files():
 
-    response = s3.list_objects_v2(Bucket=bucket)
+    response = s3.list_objects_v2(Bucket=BUCKET)
 
-    total = 0
+    files = []
 
     if "Contents" in response:
-        total = len(response["Contents"])
+        for obj in response["Contents"]:
+            files.append(obj["Key"])
 
-    return jsonify({"total_files": total})
-
+    return jsonify({
+        "total": len(files),
+        "files": files
+    })
 
 @app.route("/")
-def home():
-    return jsonify({"status": "backend running"})
+def health():
+    return {"status": "ok"}
 
-
-app.run(host="0.0.0.0", port=5000)
+app.run(host="0.0.0.0", port=3000)
