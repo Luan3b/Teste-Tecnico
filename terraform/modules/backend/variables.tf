@@ -1,7 +1,4 @@
 variable "project_name" {
-  type = string
-}
-
-variable "environment" {
-  type = string
+  description = "Nome do projeto"
+  type        = string
 }
