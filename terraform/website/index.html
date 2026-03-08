@@ -1,24 +1,28 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Dream Squad Challenge</title>
+<title>Contador de Arquivos</title>
 </head>
 
 <body>
 
-<h1>Dream Squad Challenge</h1>
+<h1>Arquivos Gerados</h1>
 
-<button onclick="callBackend()">Backend ECS</button>
-<button onclick="callLambda()">Lambda</button>
+<button onclick="getFiles()">Consultar</button>
+
+<p id="result"></p>
 
 <script>
 
-function callBackend(){
-alert("Backend ECS")
-}
+async function getFiles() {
 
-function callLambda(){
-alert("Lambda Daily")
+const response = await fetch("http://ALB_URL/files")
+
+const data = await response.json()
+
+document.getElementById("result").innerText =
+"Total de arquivos: " + data.total_files
+
 }
 
 </script>
