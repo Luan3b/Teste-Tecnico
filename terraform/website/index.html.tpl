@@ -18,8 +18,7 @@
 <div class="container">
     <div class="card">
         <h2>Monitor de Logs</h2>
-        <p>Integração entre CloudFront, ECS Fargate e S3.</p>
-
+        
         <button id="btn-buscar" onclick="buscar()">Buscar Arquivos</button>
 
         <h3 id="total"></h3>
