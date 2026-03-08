@@ -1,15 +1,14 @@
 import boto3
-import datetime
+import os
+from datetime import datetime
 
 s3 = boto3.client("s3")
 
 def lambda_handler(event, context):
 
-    bucket = "files-bucket"
+    bucket = os.environ["BUCKET_NAME"]
 
-    now = datetime.datetime.now().isoformat()
-
-    filename = f"file-{now}.txt"
+    filename = f"file-{datetime.utcnow().isoformat()}.txt"
 
     s3.put_object(
         Bucket=bucket,
@@ -19,5 +18,5 @@ def lambda_handler(event, context):
 
     return {
         "statusCode": 200,
-        "body": "arquivo criado"
+        "file": filename
     }

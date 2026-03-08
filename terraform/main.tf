@@ -15,6 +15,7 @@ module "frontend" {
   backend_url = module.backend.backend_url
 }
 
+
 module "lambda_daily" {
 
   source = "./modules/lambda_daily"

@@ -28,7 +28,7 @@
 </div>
 <script>
 
-const API = "http://${backend_url}/files"
+const API = "/files"
 
 async function buscar(){
 
