@@ -1,139 +1,194 @@
-Este é um projeto Infrastructure as Code (IaC) utilizando Terraform para deploy de uma aplicação serverless na AWS. O sistema consiste em:
+DreamSquad DevOps Challenge
 
-Backend ECS Fargate (API Flask)
+Este projeto implementa uma infraestrutura completa na AWS utilizando Infrastructure as Code (IaC) com Terraform.
 
-Frontend S3 + CloudFront (Site estático)
+A solução provisiona automaticamente uma aplicação serverless composta por:
 
-Lambda Agendada (Geração automática de arquivos)
+Backend API em Flask rodando no ECS Fargate
 
-Toda infraestrutura de rede necessária
+Frontend estático hospedado no S3 e distribuído pelo CloudFront
 
+Lambda agendada para geração automática de arquivos
+
+Infraestrutura de rede completa (VPC, subnets, ALB, etc.)
+
+🏗️ Arquitetura da Solução
+
+A aplicação segue uma arquitetura baseada em serviços gerenciados da AWS.
+
+Componentes principais:
+
+Amazon ECS Fargate → Executa a API Flask em container
+
+Amazon ECR → Armazena a imagem Docker da aplicação
+
+Application Load Balancer (ALB) → Distribui o tráfego para os containers
+
+Amazon S3 → Hospeda o site estático
+
+Amazon CloudFront → CDN global para entrega do frontend
+
+AWS Lambda → Geração automática de arquivos
+
+Amazon EventBridge → Agendamento da execução da Lambda
+
+Amazon VPC → Isolamento da infraestrutura de rede
+
+📂 Estrutura do Projeto
 dreamsquad-challenge/
-├── main.tf                  # Orquestração dos módulos
 
-├── provider.tf              # Configuração do AWS Provider
+ ├── main.tf            # Orquestração dos módulos
+ 
+ ├── provider.tf        # Configuração do AWS Provider
+ 
+ ├── variables.tf       # Variáveis globais
+ 
+ ├── versions.tf        # Versões dos providers
+ 
+ ├── outputs.tf         # Outputs globais
+ 
 
-├── variables.tf             # Variáveis globais
 
-├── versions.tf              # Versões dos providers
-
-├── outputs.tf               # Outputs globais
-
-│
 ├── modules/
 
-│   ├── backend/             # Módulo da API Flask
+│   ├── backend/       # Módulo da API Flask
 
-│   │   ├── main.tf          # VPC, ECS, ALB, ECR
+│   │   ├── main.tf
 
-│   │   ├── outputs.tf       # URL do backend
+│   │   ├── outputs.tf
 
-│   │   ├── variables.tf     # project_name
+│   │   ├── variables.tf
 
-│   │   ├── app.py           # Código Flask
+│   │   ├── app.py
 
-│   │   └── requirements.txt # Dependências Python
-
-│   │
-
-│   ├── frontend/            # Módulo do site estático
-
-│   │   ├── main.tf          # S3 + CloudFront
-
-│   │   ├── outputs.tf       # URL do frontend
-
-│   │   ├── variables.tf     # project_name, environment, backend_url
-
-│   │   ├── index.html.tpl   # Template HTML (com variável backend_url)
-
-│   │   └── style.css        # Estilos CSS
+│   │   └── requirements.txt
 
 │   │
+│   ├── frontend/      # Módulo do site estático
 
-│   └── lambda_daily/        # Módulo da Lambda agendada
+│   │   ├── main.tf
 
-│       ├── main.tf          # Lambda + S3 + EventBridge
+│   │   ├── outputs.tf
 
-│       ├── outputs.tf       # Nome do bucket e lambda
+│   │   ├── variables.tf
 
-│       ├── variables.tf     # project_name, environment
+│   │   ├── index.html.tpl
+
+│   │   └── style.css
+
+│   │
+│   └── lambda_daily/  # Módulo da Lambda agendada
+
+│       ├── main.tf
+
+│       ├── outputs.tf
+
+│       ├── variables.tf
 
 │       └── lambda/
 
-│           └── handler.py   # Código Python da Lambda
+│           └── handler.py
+⚙️ Pré-requisitos
 
+Antes de iniciar, instale:
 
-🔧 CONFIGURAÇÃO INICIAL
+Terraform
 
-Configure suas credenciais AWS
+Docker
+
+AWS CLI
+
+Configure suas credenciais AWS:
 
 aws configure
-# Coloque sua Access Key ID
-# Coloque sua Secret Access Key
-# Região: us-east-1 (ou a que preferir)
-# Formato de saída: json
 
-Verifique se está tudo certo
+Informe:
+
+AWS Access Key ID
+AWS Secret Access Key
+Region: us-east-1
+Output format: json
+
+Teste se a configuração está correta:
 
 aws sts get-caller-identity
+🚀 Deploy da Infraestrutura
 
-PASSO 1: SUBIR A INFRAESTRUTURA
+Inicialize o Terraform:
 
 terraform init
+
+Visualize o plano de execução:
+
 terraform plan
+
+Aplicar a infraestrutura:
+
 terraform apply -auto-approve
 
-Guarde as informações importantes
+Verificar os outputs:
 
 terraform output
+🐳 Build e Push da Imagem Docker
 
-PASSO 2: BUILD E PUSH DA IMAGEM DOCKER
+Entre no diretório do backend:
 
 cd modules/backend
 
-# Pegue a URL do repositório (salve em uma variável)
+Obtenha a URL do repositório ECR:
+
 export ECR_URL=$(terraform output -raw ecr_repository_url 2>/dev/null)
 
-# Se não funcionar, busque manualmente:
-# 1. Acesse console AWS > ECR
-# 2. Copie a URI do repositório
+Login no ECR:
 
-# Login (extraia apenas o domínio: account.dkr.ecr.region.amazonaws.com)
-aws ecr get-login-password --region us-east-1 | \
-  docker login --username AWS --password-stdin $(echo $ECR_URL | cut -d/ -f1)
+aws ecr get-login-password --region us-east-1 \
+| docker login --username AWS --password-stdin $(echo $ECR_URL | cut -d/ -f1)
 
-  # Build da imagem
+Build da imagem:
+
 docker build -t dreamsquad-challenge-repo .
 
-# Tag com a URL do ECR
+Tag da imagem:
+
 docker tag dreamsquad-challenge-repo:latest $ECR_URL:latest
 
-# Push para o ECR
+Push da imagem:
+
 docker push $ECR_URL:latest
 
-# Volte para a raiz do projeto
-cd ../..
+Voltar para a raiz do projeto:
 
-PASSO 3: FORÇAR O DEPLOY NO ECS
-Atualizar o serviço para usar a nova imagem
-bash
+cd ../..
+🔄 Atualizar Deploy no ECS
+
+Forçar novo deploy do serviço:
+
 aws ecs update-service \
-  --cluster dreamsquad-challenge-cluster \
-  --service dreamsquad-challenge-service \
-  --force-new-deployment \
-  --region us-east-1
-Aguardar o serviço ficar estável
+--cluster dreamsquad-challenge-cluster \
+--service dreamsquad-challenge-service \
+--force-new-deployment \
+--region us-east-1
+
+Aguardar o serviço estabilizar:
 
 aws ecs wait services-stable \
-  --cluster dreamsquad-challenge-cluster \
-  --service dreamsquad-challenge-service \
-  --region us-east-1
+--cluster dreamsquad-challenge-cluster \
+--service dreamsquad-challenge-service \
+--region us-east-1
+🌐 Testando a Aplicação
 
-  PASSO 4: VERIFICAR SE TUDO FUNCIONA
-1. Testar o frontend
-   
-# Pegar a URL
+Obter a URL do frontend:
+
 terraform output frontend_url
 
-# Abrir no navegador
-echo "https://$(terraform output -raw frontend_url)"
+Abrir no navegador:
+
+https://$(terraform output -raw frontend_url)
+🧠 Funcionalidades
+
+✔ Infraestrutura automatizada com Terraform
+✔ Backend containerizado com Docker
+✔ Deploy serverless com ECS Fargate
+✔ CDN global com CloudFront
+✔ Geração automática de arquivos com Lambda
+✔ Arquitetura modular com Terraform
