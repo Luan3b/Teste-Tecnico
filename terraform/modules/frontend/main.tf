@@ -1,3 +1,4 @@
+# Bucket S3 que hospedará os arquivos do site
 resource "aws_s3_bucket" "website" {
   bucket = "luan-terraform-website"
 
@@ -6,6 +7,7 @@ resource "aws_s3_bucket" "website" {
   }
 }
 
+# Configuração para permitir acesso público ao bucket
 resource "aws_s3_bucket_public_access_block" "website" {
   bucket = aws_s3_bucket.website.id
 
@@ -15,6 +17,7 @@ resource "aws_s3_bucket_public_access_block" "website" {
   restrict_public_buckets = false
 }
 
+# Policy que permite leitura pública dos arquivos do site
 resource "aws_s3_bucket_policy" "website_policy" {
   bucket = aws_s3_bucket.website.id
 
@@ -35,6 +38,7 @@ resource "aws_s3_bucket_policy" "website_policy" {
   })
 }
 
+# Upload do arquivo index.html gerado a partir de um template
 resource "aws_s3_object" "index" {
 
   bucket = aws_s3_bucket.website.bucket
@@ -46,6 +50,7 @@ resource "aws_s3_object" "index" {
   content_type = "text/html"
 }
 
+# Upload do arquivo CSS do site
 resource "aws_s3_object" "css" {
   bucket = aws_s3_bucket.website.bucket
   key    = "style.css"
@@ -54,17 +59,18 @@ resource "aws_s3_object" "css" {
   content_type = "text/css"
 }
 
+# Distribuição CloudFront que entrega o site globalmente
 resource "aws_cloudfront_distribution" "cdn" {
   enabled             = true
   default_root_object = "index.html"
 
-  # ORIGEM 1: Seu S3 (Site) - Já estava no seu código
+# ORIGEM 1: Seu S3 (Site) - Já estava no seu código
   origin {
     domain_name = aws_s3_bucket.website.bucket_regional_domain_name
     origin_id   = "s3-website"
   }
 
-  # ORIGEM 2: Seu Backend (ALB) - ADICIONE ISSO
+# ORIGEM 2: Seu Backend (ALB) - ADICIONE ISSO
   origin {
     domain_name = var.backend_url # O DNS do seu Load Balancer
     origin_id   = "backend-alb"
@@ -76,7 +82,7 @@ resource "aws_cloudfront_distribution" "cdn" {
     }
   }
 
-  # COMPORTAMENTO PADRÃO: S3 (Site) - Já estava no seu código
+# COMPORTAMENTO PADRÃO: S3 (Site) - Já estava no seu código
   default_cache_behavior {
     allowed_methods        = ["GET", "HEAD"]
     cached_methods         = ["GET", "HEAD"]
@@ -88,7 +94,8 @@ resource "aws_cloudfront_distribution" "cdn" {
     }
   }
 
-  # COMPORTAMENTO PARA A API: Redireciona /files para o ALB - ADICIONE ISSO
+# Comportamento específico para chamadas da API
+# Requisições para /files são encaminhadas para o backend (ALB)
   ordered_cache_behavior {
     path_pattern     = "/files*"
     target_origin_id = "backend-alb"
@@ -107,14 +114,18 @@ resource "aws_cloudfront_distribution" "cdn" {
     max_ttl                = 0
   }
 
+# Sem restrição geográfica para acesso ao site
   restrictions {
     geo_restriction { restriction_type = "none" }
   }
 
+# Certificado padrão HTTPS do CloudFront
   viewer_certificate {
     cloudfront_default_certificate = true
   }
 }
+
+# Template utilizado para gerar dinamicamente o index.html
 data "template_file" "index" {
   template = file("${path.module}/../../website/index.html.tpl")
 

@@ -1,5 +1,7 @@
+# Obtém automaticamente as zonas de disponibilidade disponíveis na região
 data "aws_availability_zones" "available" {}
 
+# Criação da VPC onde toda a infraestrutura do backend será criada
 resource "aws_vpc" "backend_vpc" {
 
   cidr_block = "10.0.0.0/16"
@@ -9,6 +11,7 @@ resource "aws_vpc" "backend_vpc" {
   }
 }
 
+# Criação de duas subnets públicas distribuídas em diferentes AZs
 resource "aws_subnet" "public" {
 
   count = 2
@@ -22,11 +25,13 @@ resource "aws_subnet" "public" {
   map_public_ip_on_launch = true
 }
 
+# Internet Gateway para permitir acesso à internet na VPC
 resource "aws_internet_gateway" "igw" {
 
   vpc_id = aws_vpc.backend_vpc.id
 }
 
+# Tabela de rotas pública para permitir saída para internet
 resource "aws_route_table" "public" {
 
   vpc_id = aws_vpc.backend_vpc.id
@@ -39,6 +44,7 @@ resource "aws_route_table" "public" {
   }
 }
 
+# Associação da tabela de rotas com as subnets públicas
 resource "aws_route_table_association" "public" {
 
   count = 2
@@ -48,21 +54,24 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
+# Security Group do Application Load Balancer
 resource "aws_security_group" "alb_sg" {
 
   name = "${var.project_name}-alb-sg"
 
   vpc_id = aws_vpc.backend_vpc.id
 
+# Permite tráfego HTTP da internet
   ingress {
 
     from_port = 80
-    to_port = 80
+    to_port = 80# Template utilizado para gerar dinamicamente o index.html
     protocol = "tcp"
 
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+# Permite saída para qualquer destino
   egress {
 
     from_port = 0
@@ -73,12 +82,13 @@ resource "aws_security_group" "alb_sg" {
   }
 }
 
+# Security Group das tarefas ECS
 resource "aws_security_group" "ecs_sg" {
 
   name = "${var.project_name}-ecs-sg"
 
   vpc_id = aws_vpc.backend_vpc.id
-
+# Permite tráfego apenas vindo do ALB
   ingress {
 
     from_port = 5000
@@ -88,6 +98,7 @@ resource "aws_security_group" "ecs_sg" {
     security_groups = [aws_security_group.alb_sg.id]
   }
 
+# Permite saída para qualquer destino
   egress {
 
     from_port = 0
@@ -98,16 +109,19 @@ resource "aws_security_group" "ecs_sg" {
   }
 }
 
+# Repositório ECR onde a imagem Docker do backend será armazenada
 resource "aws_ecr_repository" "backend" {
 
   name = "${var.project_name}-repo"
 }
 
+# Cluster ECS onde os containers serão executados
 resource "aws_ecs_cluster" "backend_cluster" {
 
   name = "${var.project_name}-cluster"
 }
 
+# Application Load Balancer para distribuir tráfego para os containers
 resource "aws_lb" "backend_alb" {
 
   name = "${var.project_name}-alb"
@@ -119,6 +133,7 @@ resource "aws_lb" "backend_alb" {
   security_groups = [aws_security_group.alb_sg.id]
 }
 
+# Target Group do ALB que aponta para os containers ECS
 resource "aws_lb_target_group" "backend_tg" {
   name        = "${var.project_name}-tg"
   port        = 5000
@@ -126,6 +141,7 @@ resource "aws_lb_target_group" "backend_tg" {
   target_type = "ip"
   vpc_id      = aws_vpc.backend_vpc.id
 
+ # Health check para verificar se o container está funcionando
 health_check {
     path                = "/" # Usa a rota de health que você criou
     port                = "5000"
@@ -134,6 +150,7 @@ health_check {
   }
 }
 
+# Listener do ALB que recebe tráfego HTTP e encaminha para o Target Group
 resource "aws_lb_listener" "backend_listener" {
 
   load_balancer_arn = aws_lb.backend_alb.arn
@@ -150,6 +167,7 @@ resource "aws_lb_listener" "backend_listener" {
   }
 }
 
+# Role utilizada pelas tarefas ECS para acessar serviços da AWS
 resource "aws_iam_role" "ecs_task_execution" {
 
   name = "${var.project_name}-ecs-role"
@@ -176,6 +194,7 @@ resource "aws_iam_role" "ecs_task_execution" {
   })
 }
 
+# Policy padrão da AWS para execução de tarefas ECS
 resource "aws_iam_role_policy_attachment" "ecs_policy" {
 
   role = aws_iam_role.ecs_task_execution.name
@@ -183,6 +202,7 @@ resource "aws_iam_role_policy_attachment" "ecs_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+# Definição da Task ECS que executará o container backend
 resource "aws_ecs_task_definition" "backend_task" {
   family                   = "${var.project_name}-task"
   requires_compatibilities = ["FARGATE"]
@@ -216,6 +236,7 @@ resource "aws_ecs_task_definition" "backend_task" {
   ])
 }
 
+# Serviço ECS que mantém o container em execução
 resource "aws_ecs_service" "backend_service" {
 
   name = "${var.project_name}-service"
@@ -237,6 +258,7 @@ resource "aws_ecs_service" "backend_service" {
     assign_public_ip = true
   }
 
+# Integração do serviço com o Load Balancer
   load_balancer {
 
     target_group_arn = aws_lb_target_group.backend_tg.arn
@@ -250,6 +272,7 @@ resource "aws_ecs_service" "backend_service" {
     aws_lb_listener.backend_listener
   ]
 }
+
 # Policy para o Backend acessar o S3
 resource "aws_iam_role_policy" "ecs_s3_policy" {
   name = "${var.project_name}-s3-policy"
