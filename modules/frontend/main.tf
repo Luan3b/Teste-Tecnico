@@ -49,7 +49,7 @@ resource "aws_s3_object" "index" {
 resource "aws_s3_object" "css" {
   bucket = aws_s3_bucket.website.bucket
   key    = "style.css"
-  source = "${path.module}/../../../app/frontend/style.css"
+  source = "${path.module}/../../app/frontend/style.css"
 
   content_type = "text/css"
 }
@@ -113,7 +113,7 @@ resource "aws_cloudfront_distribution" "cdn" {
 }
 
 data "template_file" "index" {
-  template = file("${path.module}/../../../app/frontend/index.html.tpl")
+  template = file("${path.module}/../../app/frontend/index.html.tpl")
 
   vars = {
     backend_url = var.backend_url
