@@ -145,7 +145,6 @@ resource "aws_iam_role_policy" "ecs_s3_policy" {
   })
 }
 
-# ========== NOVA POLÍTICA DE LOGS ==========
 resource "aws_iam_role_policy" "ecs_logs_policy" {
   name = "${var.project_name}-logs-policy"
   role = aws_iam_role.ecs_task_execution.id
@@ -167,7 +166,6 @@ resource "aws_iam_role_policy" "ecs_logs_policy" {
     ]
   })
 }
-# ============================================
 
 resource "aws_ecs_task_definition" "backend_task" {
   family                   = "${var.project_name}-task"
@@ -209,9 +207,10 @@ resource "aws_ecs_task_definition" "backend_task" {
     }
   ])
 
-  depends_on = [
+    depends_on = [
     aws_iam_role_policy.ecs_s3_policy,
-    aws_iam_role_policy.ecs_logs_policy  # <-- ADICIONADO
+    aws_iam_role_policy.ecs_logs_policy,
+    aws_iam_role_policy_attachment.ecs_policy
   ]
 }
 
