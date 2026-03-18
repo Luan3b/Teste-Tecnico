@@ -3,6 +3,7 @@ from flask_cors import CORS
 import boto3
 import os
 import logging
+from botocore.exceptions import ClientError
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -48,6 +49,9 @@ def get_file(file_key):
     try:
         logger.info(f"Getting file: {file_key} from bucket: {BUCKET}")
         
+        if not BUCKET:
+            return jsonify({"error": "BUCKET_NAME not configured"}), 500
+        
         response = s3.get_object(Bucket=BUCKET, Key=file_key)
         content = response['Body'].read().decode('utf-8')
         
@@ -57,8 +61,13 @@ def get_file(file_key):
             "size": response['ContentLength']
         }), 200
         
-    except s3.exceptions.NoSuchKey:
-        return jsonify({"error": "File not found"}), 404
+    except ClientError as e:
+        error_code = e.response['Error']['Code']
+        if error_code == 'NoSuchKey':
+            return jsonify({"error": "File not found"}), 404
+        else:
+            logger.error(f"ClientError getting file: {str(e)}")
+            return jsonify({"error": str(e)}), 500
     except Exception as e:
         logger.error(f"Error getting file: {str(e)}")
         return jsonify({"error": str(e)}), 500
