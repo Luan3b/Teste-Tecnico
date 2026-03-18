@@ -6,7 +6,6 @@ import sys
 from moto import mock_aws
 from unittest.mock import patch, MagicMock
 
-# Adicionar o caminho raiz ao PYTHONPATH
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app.lambda_function.handler import lambda_handler
