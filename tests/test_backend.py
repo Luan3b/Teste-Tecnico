@@ -3,6 +3,7 @@ import json
 import os
 import sys
 from unittest.mock import patch, MagicMock
+from datetime import datetime
 
 # Adicionar o caminho raiz ao PYTHONPATH
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -51,11 +52,20 @@ def test_list_files_with_content(client):
     """Testa listagem de arquivos com conteúdo no bucket"""
     with patch('app.backend.app.s3') as mock_s3:
         with patch('app.backend.app.BUCKET', 'test-bucket'):
+            # Criar objetos datetime mockados com método isoformat
+            class MockDateTime:
+                def isoformat(self):
+                    return '2024-01-01T00:00:00'
+            
+            class MockDateTime2:
+                def isoformat(self):
+                    return '2024-01-02T00:00:00'
+            
             # Mock do S3 retornando arquivos
             mock_s3.list_objects_v2.return_value = {
                 'Contents': [
-                    {'Key': 'file1.txt', 'Size': 100, 'LastModified': '2024-01-01'},
-                    {'Key': 'file2.txt', 'Size': 200, 'LastModified': '2024-01-02'}
+                    {'Key': 'file1.txt', 'Size': 100, 'LastModified': MockDateTime()},
+                    {'Key': 'file2.txt', 'Size': 200, 'LastModified': MockDateTime2()}
                 ]
             }
             
@@ -67,6 +77,8 @@ def test_list_files_with_content(client):
             assert len(data['files']) == 2
             assert data['files'][0]['key'] == 'file1.txt'
             assert data['files'][1]['key'] == 'file2.txt'
+            assert data['files'][0]['last_modified'] == '2024-01-01T00:00:00'
+            assert data['files'][1]['last_modified'] == '2024-01-02T00:00:00'
 
 def test_get_specific_file(client):
     """Testa obtenção de um arquivo específico"""
