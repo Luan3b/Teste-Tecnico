@@ -6,7 +6,12 @@ from datetime import datetime
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-s3 = boto3.client("s3")
+# Não criar o cliente aqui - vamos criar dentro da função ou usar lazy loading
+# s3 = boto3.client("s3")  # <-- REMOVER ESTA LINHA
+
+def get_s3_client():
+    """Retorna um cliente S3 (criado sob demanda para facilitar testes)"""
+    return boto3.client("s3")
 
 def lambda_handler(event, context):
     """
@@ -17,6 +22,9 @@ def lambda_handler(event, context):
         
         if not bucket:
             raise ValueError("BUCKET_NAME environment variable not set")
+        
+        # Criar o cliente AQUI dentro da função
+        s3 = get_s3_client()
         
         timestamp = datetime.utcnow().isoformat()
         filename = f"daily-file-{timestamp}.txt"
