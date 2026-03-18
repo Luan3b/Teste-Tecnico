@@ -54,8 +54,8 @@ def test_list_files_with_content(client):
             # Mock do S3 retornando arquivos
             mock_s3.list_objects_v2.return_value = {
                 'Contents': [
-                    {'Key': 'file1.txt', 'Size': 100, 'LastModified': MagicMock(isoformat=lambda: '2024-01-01')},
-                    {'Key': 'file2.txt', 'Size': 200, 'LastModified': MagicMock(isoformat=lambda: '2024-01-02')}
+                    {'Key': 'file1.txt', 'Size': 100, 'LastModified': '2024-01-01'},
+                    {'Key': 'file2.txt', 'Size': 200, 'LastModified': '2024-01-02'}
                 ]
             }
             
@@ -72,10 +72,15 @@ def test_get_specific_file(client):
     """Testa obtenção de um arquivo específico"""
     with patch('app.backend.app.s3') as mock_s3:
         with patch('app.backend.app.BUCKET', 'test-bucket'):
-            # Mock do S3 retornando um arquivo
-            mock_response = MagicMock()
-            mock_response['Body'].read.return_value = b'conteudo do arquivo'
-            mock_response['ContentLength'] = 18
+            # Criar um mock para o Body que tenha o método read
+            mock_body = MagicMock()
+            mock_body.read.return_value = b'conteudo do arquivo'
+            
+            # Criar um dicionário normal (não MagicMock) para a resposta
+            mock_response = {
+                'Body': mock_body,
+                'ContentLength': 18
+            }
             mock_s3.get_object.return_value = mock_response
             
             response = client.get('/files/test.txt')
