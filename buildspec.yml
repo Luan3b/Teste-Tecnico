@@ -1,0 +1,87 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.10
+    commands:
+      - echo "Installing Terraform..."
+      - curl -O https://releases.hashicorp.com/terraform/1.5.0/terraform_1.5.0_linux_amd64.zip
+      - unzip terraform_1.5.0_linux_amd64.zip -d /usr/local/bin/
+      - chmod +x /usr/local/bin/terraform
+      - terraform --version
+      
+      - echo "Installing dependencies..."
+      - pip install --upgrade pip
+      - pip install pytest boto3 moto flask flask-cors
+
+  pre_build:
+    commands:
+      - echo "Running tests..."
+      - mkdir -p test-results
+      - cd tests
+      - python -m pytest test_lambda.py -v --junitxml=../test-results/lambda-results.xml
+      - python -m pytest test_backend.py -v --junitxml=../test-results/backend-results.xml
+      - cd ..
+      
+      - echo "Validating Terraform..."
+      - cd terraform
+      - terraform init
+      - terraform validate
+      - cd ..
+
+  build:
+    commands:
+      - echo "Deploying infrastructure..."
+      - cd terraform
+      
+      - |
+        if [ "${CODEBUILD_WEBHOOK_TRIGGER}" = "branch/main" ]; then
+          ENVIRONMENT="prod"
+        elif [ "${CODEBUILD_WEBHOOK_TRIGGER}" = "branch/develop" ]; then
+          ENVIRONMENT="dev"
+        else
+          ENVIRONMENT="dev"
+        fi
+      
+      - echo "Deploying to environment: $ENVIRONMENT"
+      
+      - terraform init \
+          -backend-config="bucket=dreamsquad-terraform-state-${ENVIRONMENT}" \
+          -backend-config="key=${ENVIRONMENT}/terraform.tfstate" \
+          -backend-config="region=us-east-1"
+      
+      - terraform plan -var="environment=${ENVIRONMENT}" -out=tfplan
+      
+      - |
+        if [ "${CODEBUILD_WEBHOOK_TRIGGER}" = "branch/main" ] || [ "${CODEBUILD_WEBHOOK_TRIGGER}" = "branch/develop" ]; then
+          terraform apply -auto-approve tfplan
+        else
+          echo "Skipping apply for non-main/develop branches"
+        fi
+      
+      - terraform output -json > ../outputs.json
+      - cd ..
+
+  post_build:
+    commands:
+      - echo "Build completed on `date`"
+      - cat outputs.json
+
+reports:
+  pytest-reports:
+    files:
+      - 'test-results/*.xml'
+    file-format: JunitXml
+
+artifacts:
+  files:
+    - outputs.json
+    - terraform/**/*
+  discard-paths: no
+  base-directory: .
+
+cache:
+  paths:
+    - '/root/.cache/pip/**/*'
+    - '/root/.terraform.d/plugin-cache/**/*'
