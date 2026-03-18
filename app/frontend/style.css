@@ -1,18 +1,16 @@
-/* Reset básico */
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-/* Corpo da página */
 body {
     font-family: Arial, Helvetica, sans-serif;
     background: #f1f5f9;
     color: #333;
 }
 
-/* Header */
 header {
     background: #1e293b;
     color: white;
@@ -29,7 +27,6 @@ header p {
     opacity: 0.8;
 }
 
-/* Container central */
 .container {
     display: flex;
     justify-content: center;
@@ -37,7 +34,6 @@ header p {
     margin-top: 40px;
 }
 
-/* Card */
 .card {
     background: white;
     width: 500px;
@@ -47,7 +43,6 @@ header p {
     text-align: center;
 }
 
-/* Títulos */
 .card h2 {
     margin-bottom: 10px;
 }
@@ -57,7 +52,6 @@ header p {
     color: #666;
 }
 
-/* Botão */
 button {
     background: #2563eb;
     color: white;
@@ -73,7 +67,6 @@ button:hover {
     background: #1d4ed8;
 }
 
-/* Lista */
 ul {
     margin-top: 20px;
     list-style: none;
@@ -84,13 +77,11 @@ li {
     border-bottom: 1px solid #eee;
 }
 
-/* Total */
 #total {
     margin-top: 20px;
     font-weight: bold;
 }
 
-/* Responsivo */
 @media (max-width: 600px){
 
     .card{

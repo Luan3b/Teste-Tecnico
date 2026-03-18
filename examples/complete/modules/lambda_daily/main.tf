@@ -3,7 +3,6 @@ locals {
   bucket_name = "${var.project_name}-${var.environment}-daily-files"
 }
 
-# Bucket S3
 resource "aws_s3_bucket" "daily_bucket" {
   bucket = local.bucket_name
 
@@ -14,7 +13,6 @@ resource "aws_s3_bucket" "daily_bucket" {
   }
 }
 
-# Controle de ownership do bucket
 resource "aws_s3_bucket_ownership_controls" "bucket_ownership" {
   bucket = aws_s3_bucket.daily_bucket.id
 
@@ -23,7 +21,6 @@ resource "aws_s3_bucket_ownership_controls" "bucket_ownership" {
   }
 }
 
-# Bloquear acesso público ao bucket (já que é para dados internos)
 resource "aws_s3_bucket_public_access_block" "daily_bucket_block" {
   bucket = aws_s3_bucket.daily_bucket.id
 
@@ -33,7 +30,6 @@ resource "aws_s3_bucket_public_access_block" "daily_bucket_block" {
   restrict_public_buckets = true
 }
 
-# Role da Lambda
 resource "aws_iam_role" "lambda_role" {
   name = "${local.lambda_name}-role"
 
@@ -57,7 +53,6 @@ resource "aws_iam_role" "lambda_role" {
   }
 }
 
-# Policy da Lambda
 resource "aws_iam_role_policy" "lambda_policy" {
   name = "${local.lambda_name}-policy"
   role = aws_iam_role.lambda_role.id
@@ -97,14 +92,12 @@ resource "aws_iam_role_policy" "lambda_policy" {
   })
 }
 
-# Compactar código da Lambda
 data "archive_file" "lambda_zip" {
   type        = "zip"
   source_dir  = "${path.module}/../../../app/lambda"
   output_path = "${path.module}/lambda.zip"
 }
 
-# Função Lambda
 resource "aws_lambda_function" "daily_lambda" {
 
   depends_on = [
@@ -135,7 +128,6 @@ resource "aws_lambda_function" "daily_lambda" {
   }
 }
 
-# Regra de agendamento (10:00 AM UTC = 7:00 AM BRT)
 resource "aws_cloudwatch_event_rule" "daily_rule" {
   name                = "${local.lambda_name}-rule"
   schedule_expression = "cron(0 10 * * ? *)"
@@ -147,14 +139,12 @@ resource "aws_cloudwatch_event_rule" "daily_rule" {
   }
 }
 
-# Target da regra
 resource "aws_cloudwatch_event_target" "lambda_target" {
   rule      = aws_cloudwatch_event_rule.daily_rule.name
   target_id = "lambda"
   arn       = aws_lambda_function.daily_lambda.arn
 }
 
-# Permissão para EventBridge chamar Lambda
 resource "aws_lambda_permission" "allow_eventbridge" {
   statement_id  = "AllowExecutionFromEventBridge"
   action        = "lambda:InvokeFunction"

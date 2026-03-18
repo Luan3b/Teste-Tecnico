@@ -4,14 +4,12 @@ import boto3
 import os
 import logging
 
-# Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app)  # Libera acesso para o CloudFront
+CORS(app)
 
-# Configuração do S3
 s3 = boto3.client("s3")
 BUCKET = os.environ.get("BUCKET_NAME")
 

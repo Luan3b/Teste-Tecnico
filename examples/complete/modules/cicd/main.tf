@@ -1,4 +1,4 @@
-# S3 Bucket para artefatos do CodePipeline
+
 resource "aws_s3_bucket" "artifacts" {
   bucket = "${var.project_name}-${var.environment}-pipeline-artifacts"
 
@@ -35,7 +35,6 @@ resource "aws_s3_bucket_public_access_block" "artifacts" {
   restrict_public_buckets = true
 }
 
-# IAM Role para CodeBuild
 resource "aws_iam_role" "codebuild" {
   name = "${var.project_name}-${var.environment}-codebuild-role"
 
@@ -134,7 +133,6 @@ resource "aws_iam_role_policy" "codebuild" {
   })
 }
 
-# CodeBuild Project
 resource "aws_codebuild_project" "build" {
   name          = "${var.project_name}-${var.environment}-build"
   description   = "Build project for ${var.project_name}"
@@ -189,7 +187,6 @@ resource "aws_codebuild_project" "build" {
   }
 }
 
-# IAM Role para CodePipeline
 resource "aws_iam_role" "codepipeline" {
   name = "${var.project_name}-${var.environment}-codepipeline-role"
 
@@ -247,7 +244,6 @@ resource "aws_iam_role_policy" "codepipeline" {
   })
 }
 
-# CodePipeline
 resource "aws_codepipeline" "pipeline" {
   name     = "${var.project_name}-${var.environment}-pipeline"
   role_arn = aws_iam_role.codepipeline.arn

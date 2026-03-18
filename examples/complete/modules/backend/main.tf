@@ -127,10 +127,10 @@ resource "aws_lb_target_group" "backend_tg" {
   vpc_id      = aws_vpc.backend_vpc.id
 
 health_check {
-    path                = "/" # Usa a rota de health que você criou
+    path                = "/" 
     port                = "5000"
     interval            = 30
-    matcher             = "200" # Espera status 200 OK
+    matcher             = "200"
   }
 }
 
@@ -183,7 +183,6 @@ resource "aws_iam_role_policy_attachment" "ecs_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-# Policy para o Backend acessar o S3
 resource "aws_iam_role_policy" "ecs_s3_policy" {
   name = "${var.project_name}-s3-policy"
   role = aws_iam_role.ecs_task_execution.id
@@ -210,7 +209,6 @@ resource "aws_ecs_task_definition" "backend_task" {
   cpu                      = "256"
   memory                   = "512"
 
-  # Adicione esta linha abaixo para seu código Python ter permissão no S3
   task_role_arn      = aws_iam_role.ecs_task_execution.arn
   
   execution_role_arn = aws_iam_role.ecs_task_execution.arn
