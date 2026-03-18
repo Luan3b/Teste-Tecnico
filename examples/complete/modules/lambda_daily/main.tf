@@ -94,7 +94,7 @@ resource "aws_iam_role_policy" "lambda_policy" {
 
 data "archive_file" "lambda_zip" {
   type        = "zip"
-  source_dir  = "${path.module}/../../../app/lambda"
+  source_dir  = "${path.module}/../../../app/lambda_function"
   output_path = "${path.module}/lambda.zip"
 }
 

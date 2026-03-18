@@ -2,8 +2,14 @@ import pytest
 import boto3
 import json
 import os
+import sys
 from moto import mock_aws
 from unittest.mock import patch, MagicMock
+
+# Adicionar o caminho raiz ao PYTHONPATH
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from app.lambda_function.handler import lambda_handler
 
 class TestLambdaFunction:
     
@@ -17,12 +23,7 @@ class TestLambdaFunction:
     @mock_aws
     def test_lambda_handler_success(self, lambda_context):
         """Testa execução bem-sucedida da Lambda"""
-        
-        from app.lambda.handler import lambda_handler
-        
-        
         event = {}
-        
         
         with patch.dict(os.environ, {"BUCKET_NAME": "test-bucket"}):
             result = lambda_handler(event, lambda_context)
@@ -34,8 +35,6 @@ class TestLambdaFunction:
     @mock_aws
     def test_lambda_handler_missing_bucket(self, lambda_context):
         """Testa erro quando BUCKET_NAME não está configurado"""
-        from app.lambda.handler import lambda_handler
-        
         event = {}
         
         result = lambda_handler(event, lambda_context)
