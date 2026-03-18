@@ -26,39 +26,45 @@
     </div>
 </div>
 <script>
-
 const API = "/files"
 
 async function buscar(){
-
- try{
-
- const r = await fetch(API)
- const data = await r.json()
-
- console.log(data)
-
- document.getElementById("total").innerText =
-  "Total de arquivos: " + data.total
-
- const lista = document.getElementById("lista")
- lista.innerHTML=""
-
- data.files.forEach(f=>{
-   const li = document.createElement("li")
-   li.innerText = f
-   lista.appendChild(li)
- })
-
- }catch(e){
-
- document.getElementById("total").innerText =
-  "Erro ao carregar arquivos"
-
- }
-
+    try {
+        const r = await fetch(API)
+        const data = await r.json()
+        
+        console.log(data)
+        
+        document.getElementById("total").innerText = "Total de arquivos: " + data.total
+        
+        const lista = document.getElementById("lista")
+        lista.innerHTML = ""
+        
+        if (data.files && data.files.length > 0) {
+            data.files.forEach(item => {
+                const li = document.createElement("li")
+                // Se for objeto, pega a propriedade 'key' ou 'Key'
+                if (typeof item === 'object') {
+                    li.innerText = item.key || item.Key || JSON.stringify(item)
+                } else {
+                    li.innerText = item
+                }
+                lista.appendChild(li)
+            })
+        } else {
+            const li = document.createElement("li")
+            li.innerText = "Nenhum arquivo encontrado"
+            lista.appendChild(li)
+        }
+        
+    } catch(e) {
+        console.error(e)
+        document.getElementById("total").innerText = "Erro ao carregar arquivos"
+    }
 }
 
+// Executar busca ao carregar a página (opcional)
+window.onload = buscar
 </script>
 
 </body>
