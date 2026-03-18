@@ -6,6 +6,12 @@ locals {
 # Bucket S3
 resource "aws_s3_bucket" "daily_bucket" {
   bucket = local.bucket_name
+
+  tags = {
+    Name        = local.bucket_name
+    Environment = var.environment
+    Project     = var.project_name
+  }
 }
 
 # Controle de ownership do bucket
@@ -15,6 +21,16 @@ resource "aws_s3_bucket_ownership_controls" "bucket_ownership" {
   rule {
     object_ownership = "BucketOwnerPreferred"
   }
+}
+
+# Bloquear acesso público ao bucket (já que é para dados internos)
+resource "aws_s3_bucket_public_access_block" "daily_bucket_block" {
+  bucket = aws_s3_bucket.daily_bucket.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
 }
 
 # Role da Lambda
@@ -33,6 +49,12 @@ resource "aws_iam_role" "lambda_role" {
       }
     ]
   })
+
+  tags = {
+    Name        = "${local.lambda_name}-role"
+    Environment = var.environment
+    Project     = var.project_name
+  }
 }
 
 # Policy da Lambda
@@ -78,7 +100,7 @@ resource "aws_iam_role_policy" "lambda_policy" {
 # Compactar código da Lambda
 data "archive_file" "lambda_zip" {
   type        = "zip"
-  source_dir  = "${path.module}/lambda"
+  source_dir  = "${path.module}/../../../app/lambda"
   output_path = "${path.module}/lambda.zip"
 }
 
@@ -94,6 +116,8 @@ resource "aws_lambda_function" "daily_lambda" {
   role          = aws_iam_role.lambda_role.arn
   handler       = "handler.lambda_handler"
   runtime       = "python3.10"
+  timeout       = 60
+  memory_size   = 128
 
   filename         = data.archive_file.lambda_zip.output_path
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
@@ -103,12 +127,24 @@ resource "aws_lambda_function" "daily_lambda" {
       BUCKET_NAME = aws_s3_bucket.daily_bucket.bucket
     }
   }
+
+  tags = {
+    Name        = local.lambda_name
+    Environment = var.environment
+    Project     = var.project_name
+  }
 }
 
-# Regra de agendamento
+# Regra de agendamento (10:00 AM UTC = 7:00 AM BRT)
 resource "aws_cloudwatch_event_rule" "daily_rule" {
   name                = "${local.lambda_name}-rule"
   schedule_expression = "cron(0 10 * * ? *)"
+
+  tags = {
+    Name        = "${local.lambda_name}-rule"
+    Environment = var.environment
+    Project     = var.project_name
+  }
 }
 
 # Target da regra
